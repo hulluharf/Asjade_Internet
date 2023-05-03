@@ -3,8 +3,8 @@
 #include <Ticker.h>
 #include <ClickEncoder.h>
 
-#define WIFI_NAME "name"
-#define WIFI_PASSWORD "password"
+#define WIFI_NAME "TalTech"
+#define WIFI_PASSWORD ""
 
 #define ENC_PINA 12
 #define ENC_PINB 13
@@ -20,7 +20,9 @@ uint16_t button;
 bool personDetected = false;
 
 void iot_connected() {
+    // Send message to serial port to show that connection is established
     Serial.println("MQTT connected callback");
+    // Send message to MQTT server to show that connection is established
     iot.log("IoT encoder example!");
 }
 
@@ -29,14 +31,20 @@ void setEncFlag() {
 }
 
 void setup() {
+    // Initialize serial port and send message
+    // setting up serial connection parameter
     Serial.begin(115200);
     Serial.println("Booting");
 
-    // iot.setConfig("wname", WIFI_NAME);
-    // iot.setConfig("wpass", WIFI_PASSWORD);
+    iot.setConfig("wname", WIFI_NAME);
+    iot.setConfig("wpass", WIFI_PASSWORD);
+    iot.setConfig("msrv", "193.40.245.72");
+    iot.setConfig("mport", "1883");
+    iot.setConfig("muser", "test");
+    iot.setConfig("mpass", "test");
     iot.printConfig();
-    iot.setup();
-
+    iot.setup(); // Initialize IoT library
+   
     encoder.setButtonHeldEnabled(true);
     encoder.setDoubleClickEnabled(true);
 
@@ -52,14 +60,14 @@ void loop() {
         if (!personDetected) {
             personDetected = true;
             Serial.println("Person entered the room");
-            encoder.clicks++;
+            encoder.setValue(encoder.getValue() + 1); //Reduces the encoder value by 1 step in the counter-clockwise direction
         }
     }
     else {
         if (personDetected) {
             personDetected = false;
             Serial.println("Person exited the room");
-            encoder.clicks += 2;
+            encoder.setValue(encoder.getValue() - 1);
         }
     }
 
@@ -69,7 +77,7 @@ void loop() {
     }
 
     static int16_t last, value;
-    value += encoder.getValue();
+    value = encoder.getValue();
 
     if (value != last) {
         last = value;
@@ -80,13 +88,6 @@ void loop() {
     if (encFlag) {
         encFlag = false;
         String msg = String(value);
-        iot.publishMsg("enc", msg.c_str());
+        iot.publishMsg("MQTT_Topic", msg.c_str());//change the topic when you get it
     }
 }
-
-
-
-
-
-
-
